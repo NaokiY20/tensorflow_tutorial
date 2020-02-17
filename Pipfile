@@ -8,7 +8,7 @@ python-language-server = {extras = ["all"],version = "*"}
 ipython = "*"
 
 [packages]
-tensorflow = "==1.12.0"
+tensorflow = "==1.15.2"
 
 [requires]
 python_version = "3.6"
