@@ -149,7 +149,7 @@ def train(args: Dict):
     saver = tf.train.Saver()
     path_prefix = Path(args.prefix)
     save_path = hps.paths.model_path / path_prefix
-    save_path.mkdir(parents=True)
+    save_path.mkdir(parents=True,exist_ok=True)
     ckpt = tf.train.get_checkpoint_state(save_path)
 
     with tf.Session() as sess:

@@ -108,3 +108,8 @@ dmypy.json
 .pyre/
 
 # End of https://www.gitignore.io/api/python
+
+
+mnist/mnist_cnn/
+mnist2/mnist_cnn/
+# git rm -r -f hogehoge で消せる
