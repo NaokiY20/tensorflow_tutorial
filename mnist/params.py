@@ -11,7 +11,7 @@ mnist_classification_args = {
     },
     "hyper_parameters": {
         "learning_rate": 1e-3,
-        "step": 1000,
+        "step": 500,
         "optimizer": Optimizer.ADAM,
         "batch_size": 256
     },

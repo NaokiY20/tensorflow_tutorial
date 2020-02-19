@@ -130,7 +130,7 @@ def train(args: Dict):
 
     # optimizer settings
     with tf.name_scope('optimizer'):
-        global_step = tf.Variable(0, False)
+        global_step = tf.Variable(0, trainable=False, name='global_step')
         learning_rate = hps.hyper_parameters.learning_rate
         if hps.hyper_parameters.optimizer == model.Optimizer.ADAM:
             optimizer = tf.train.AdamOptimizer(
@@ -160,7 +160,7 @@ def train(args: Dict):
             sess.run(train_metrics_initialzie_op)
             sess.run(val_metrics_initialize_op)
             writer = tf.summary.FileWriter(
-                hps.paths.log_path / path_prefix, None)
+                hps.paths.log_path / path_prefix, sess.graph)
 
         else:
             # initialize all variable and operations
