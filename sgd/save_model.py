@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -39,18 +40,22 @@ def train(args):
         x=tf.placeholder(dtype=tf.float32,shape=[])
         y=tf.placeholder(dtype=tf.float32,shape=[])
     
+    # setup global step
+    global_step=tf.Variable(0,False,name='global_step')
+    
     # setup model
     y_hat,log_op=simple_model(x)
     loss_op=tf.math.squared_difference(y,y_hat)
 
     # setup tensorboard log(Webブラウザに表示するためのもの)
-    path=Path('./tmp/sgd_func')
+    path='./tmp/sgd_save'
+    # path=Path('./tmp/sgd_func')#Path関数を使わないのか？
     tf.summary.scalar('loss',loss_op)
     summary_op=tf.summary.merge_all()
 
     # setup stdout log
     logs_op=tf.print(
-        tf.strings.join([log_op,tf.strings.format('loss - {}',loss_op)],'/')
+        tf.strings.join([log_op,tf.strings.format('loss - {} / global_step - {}',[loss_op,global_step])],'/')
     )
 
     # setup hyper parameter
@@ -58,11 +63,23 @@ def train(args):
 
     # setup optimizer
     optimizer=tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    train_step=optimizer.minimize(loss_op) # loss_opを小さくするという最適化
+    train_step=optimizer.minimize(loss_op,global_step=global_step) # loss_opを小さくするという最適化
     init_op=tf.global_variables_initializer()
+
+    # save model
+    saver=tf.train.Saver()
+    save_path='./tmp/sgd_save'
+    ckpt=tf.train.get_checkpoint_state(save_path)
+
     with tf.Session() as sess:
-        sess.run(init_op)
-        writer=tf.summary.FileWriter(path,sess.graph)
+        if ckpt:
+            print('restore variable')
+            last_model=ckpt.model_checkpoint_path
+            saver.restore(sess,last_model)
+            writer=tf.summary.FileWriter(path,None)
+        else:
+            sess.run(init_op)
+            writer=tf.summary.FileWriter(path,sess.graph)
 
         for step in range(1000):
             # summary_op:Webブラウザで見るための記録
@@ -73,17 +90,63 @@ def train(args):
             feed_dict={x:_x,y:_y}
             if step%100==0:
                 summary,_,_=sess.run([summary_op,train_step,logs_op],feed_dict)
+                saver.save(sess,save_path+'model.ckpt',global_step=global_step)
+                _step=sess.run(global_step)
+                writer.add_summary(summary,_step)
             else:
                 summary,_=sess.run([summary_op,train_step],feed_dict)
-            writer.add_summary(summary,step)
 
-def parse():
-    # 今回はコマンドラインから取得しない
-    return None
+def inference(*args):
+    sess=tf.InteractiveSession()
+    with tf.variable_scope('inputs'):
+        x=tf.placeholder(dtype=tf.float32,shape=[])
+        y=tf.placeholder(dtype=tf.float32,shape=[])
+    
+    # setup model
+    y_hat,log_op=simple_model(x)
 
-def main():
-    args=parse()
-    train(args)
+    # save model
+    saver=tf.train.Saver()
+    save_path='./tmp/sgd_save'
+    ckpt=tf.train.get_checkpoint_state(save_path)
+
+    # load checkpoint
+    if ckpt:
+        print('restore variable')
+        last_model=ckpt.model_checkpoint_path
+        saver.restore(sess,last_model)
+    else:
+        raise Exception('for inference, we need trained model')
+    
+    while True:
+        # input
+        input_x=input('-->')
+        print('input:',input_x)
+        if not input_x.isdigit():
+            break
+        input_x=int(input_x)
+        evaled_y_hat=sess.runn([y_hat],feed_dict={x:input_x})
+        print('output:',evaled_y_hat)
+    sess.close()
+
+def parse(task:str='training'):
+    # in iPython, it doesn't use argparse
+    parser=argparse.ArgumentParser(description='')
+    parser.add_argument(
+        '-t','--task',help='training or inference',
+        default=None,choices=['training','inference'])
+    if hasattr(__builtins__,'__IPYTHON__'):
+        args=parser.parse_args(args=['--task',task])
+    else:
+        args=parser.parse_args()
+    return args
+
+def main(task:str='training'):
+    args=parse(task)
+    if args.task=='training':
+        train(args)
+    else:
+        inference(args)
 
 if __name__=='__main__':
     main()
