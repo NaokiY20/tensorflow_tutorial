@@ -9,16 +9,8 @@ def simple_model(x:tf.Tensor,scope:str='simple_model'):
     weights_scope=scope+'/weights'
     with tf.variable_scope(weights_scope):
         # simple_model/weightsにa,b(パラメータ)を定義(初期値は0.0としている)
-        a=tf.get_variable(
-            name=weights_scope+'_a',
-            shape=[],dtype=tf.float32,
-            initializer=tf.initializers.constant(
-                value=0.0,dtype=tf.float32
-            ),
-            trainable=True
-        )
-        b=tf.get_variable(
-            name=weights_scope+'_b',
+        Pi=tf.get_variable(
+            name=weights_scope+'_Pi',
             shape=[],dtype=tf.float32,
             initializer=tf.initializers.constant(
                 value=0.0,dtype=tf.float32
@@ -26,13 +18,13 @@ def simple_model(x:tf.Tensor,scope:str='simple_model'):
             trainable=True
         )
     with tf.name_scope(scope+'/formula'):
-        y=a*x+b
+        y=Pi*(x**2)
     with tf.name_scope(scope+'/log'):
-        log_op=tf.strings.format('a - {} / b - {}',[a,b])
+        log_op=tf.strings.format('Pi - {} ',Pi)
     return y,log_op
 
 def teacher(x:np.float32):
-    y=5.0*x+8.0
+    y=np.pi*(x**2)
     return y
 
 def train(args):
