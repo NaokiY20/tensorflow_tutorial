@@ -13,8 +13,7 @@ import params
 import params_utils
 
 
-def load_mnist(
-        save_mnist_path: Path = Path('./tmp/mnist'), show_info: bool = True):
+def load_mnist(save_mnist_path: Path = Path('./tmp/mnist'), show_info: bool = True):
     """load mnist dataset via tensorflow
 
     Parameters
